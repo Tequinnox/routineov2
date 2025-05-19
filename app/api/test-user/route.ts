@@ -1,9 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = await cookies()
     
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       }
     )
 
+    // Use getUser() instead of getSession() for better security
     const { data: { user }, error } = await supabase.auth.getUser()
 
     // Get all cookies for debugging
