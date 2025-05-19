@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies'
@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
             const cookie = await cookieStore.get(name)
             return cookie?.value
           },
-          async set(name: string, value: string, options: { path?: string; maxAge?: number }) {
+          async set(name: string, value: string, options: CookieOptions) {
             await cookieStore.set({
               name,
               value,
               ...options,
             })
           },
-          async remove(name: string, options: { path?: string }) {
+          async remove(name: string, options: CookieOptions) {
             await cookieStore.set({
               name,
               value: '',
