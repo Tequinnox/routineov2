@@ -1,0 +1,61 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
+import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies'
+
+export async function GET(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          async get(name: string) {
+            const cookie = await cookieStore.get(name)
+            return cookie?.value
+          },
+          async set(name: string, value: string, options: { path?: string; maxAge?: number }) {
+            await cookieStore.set({
+              name,
+              value,
+              ...options,
+            })
+          },
+          async remove(name: string, options: { path?: string }) {
+            await cookieStore.set({
+              name,
+              value: '',
+              ...options,
+              maxAge: 0,
+            })
+          },
+        },
+      }
+    )
+
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    // Get all cookies for debugging
+    const allCookies = await cookieStore.getAll()
+    const cookieNames = allCookies.map((cookie: RequestCookie) => cookie.name)
+
+    return NextResponse.json({ 
+      isAuthenticated: !!user,
+      user,
+      debug: {
+        hasSessionToken: cookieNames.some((name: string) => name.includes('auth-token')),
+        sessionExists: !!user,
+        userId: user?.id,
+        cookieNames,
+      }
+    })
+  } catch (error) {
+    console.error('Error in test-user endpoint:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+} 
